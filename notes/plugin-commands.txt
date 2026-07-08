@@ -1,0 +1,6 @@
+pip install netbox-plugin-dhcp
+pip install netbox-floorplan-plugin
+pip install netbox-secrets
+pip install --no-cache-dir slurpit_netbox
+pip install netbox-topology-views
+pip install netbox-documents

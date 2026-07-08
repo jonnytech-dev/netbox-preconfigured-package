@@ -1,163 +1,192 @@
-# netbox-docker (4.6.1 - preconfigured package with installed plugins PnP)
+# NetBox Docker — Pre-configured with Plugins
 
-[![GitHub release (latest by date)](https://img.shields.io/github/v/release/netbox-community/netbox-docker)][github-release]
-[![GitHub stars](https://img.shields.io/github/stars/netbox-community/netbox-docker)][github-stargazers]
-![GitHub closed pull requests](https://img.shields.io/github/issues-pr-closed-raw/netbox-community/netbox-docker)
-![Github release workflow](https://img.shields.io/github/actions/workflow/status/netbox-community/netbox-docker/release.yml?branch=release)
-![Docker Pulls](https://img.shields.io/docker/pulls/netboxcommunity/netbox)
-[![GitHub license](https://img.shields.io/github/license/netbox-community/netbox-docker)][netbox-docker-license]
+A ready-to-go NetBox v4.6.1 Docker setup with plugins pre-installed. Clone it, build, and run — no manual plugin installation needed.
 
-[The GitHub repository][netbox-docker-github] houses the components needed to build NetBox as a container.
-Images are built regularly using the code in that repository
-and are pushed to [Docker Hub][netbox-dockerhub],
-[Quay.io][netbox-quayio] and [GitHub Container Registry][netbox-ghcr].
-_NetBox Docker_ is a project developed and maintained by the _NetBox_ community.
+## Included Plugins
 
-Do you have any questions?
-Before opening an issue on GitHub,
-please join [our Slack][netbox-docker-slack]
-and ask for help in the [`#netbox-docker`][netbox-docker-slack-channel] channel,
-or start a new [GitHub Discussion][github-discussions].
+| Plugin | Version | Description |
+|--------|---------|-------------|
+| netbox-secrets | 3.1.0 | Securely store and categorize secrets like device passwords |
+| netbox-floorplan-plugin | 0.9.2 | Graphical floor plan mapping for sites and locations |
+| netbox-topology-views | latest | Auto-generated topology maps from devices and cables |
+| slurpit-netbox | latest | Automated network device discovery via SNMP/SSH |
+| netbox-documents | latest | Attach files and documents to any NetBox object |
+| netbox-plugin-dhcp | latest | DHCP management within NetBox |
 
-[github-stargazers]: https://github.com/netbox-community/netbox-docker/stargazers
-[github-release]: https://github.com/netbox-community/netbox-docker/releases
-[netbox-dockerhub]: https://hub.docker.com/r/netboxcommunity/netbox/
-[netbox-quayio]: https://quay.io/repository/netboxcommunity/netbox
-[netbox-ghcr]: https://github.com/netbox-community/netbox-docker/pkgs/container/netbox
-[netbox-docker-github]: https://github.com/netbox-community/netbox-docker/
-[netbox-docker-slack]: https://join.slack.com/t/netdev-community/shared_invite/zt-mtts8g0n-Sm6Wutn62q_M4OdsaIycrQ
-[netbox-docker-slack-channel]: https://netdev-community.slack.com/archives/C01P0GEVBU7
-[netbox-slack-channel]: https://netdev-community.slack.com/archives/C01P0FRSXRV
-[netbox-docker-license]: https://github.com/netbox-community/netbox-docker/blob/release/LICENSE
-[github-discussions]: https://github.com/netbox-community/netbox-docker/discussions
+## Prerequisites
 
-## Quickstart
+- [Docker](https://docs.docker.com/get-docker/)
+- [Docker Compose](https://docs.docker.com/compose/install/) (v2+)
 
-To get _NetBox Docker_ up and running run the following commands.
-There is a more complete [_Getting Started_ guide on our wiki][wiki-getting-started] which explains every step.
+## Quick Start
 
-```bash
-git clone -b release https://github.com/netbox-community/netbox-docker.git
-cd netbox-docker
-# Copy the example override file
-cp docker-compose.override.yml.example docker-compose.override.yml
-# Read and edit the file to your liking
-docker compose pull
-docker compose up
+1. **Clone the repo:**
+
+   ```bash
+   git clone https://github.com/YOUR_USERNAME/netbox-docker.git
+   cd netbox-docker
+   ```
+
+2. **Review the env files** in the `env/` folder. They contain default template values that work out of the box for local development. For production use, replace the default passwords and keys with your own:
+
+   | File | What to change |
+   |------|----------------|
+   | `env/netbox.env` | `SECRET_KEY`, `API_TOKEN_PEPPER_1`, `DB_PASSWORD`, `REDIS_PASSWORD`, `REDIS_CACHE_PASSWORD` |
+   | `env/postgres.env` | `POSTGRES_PASSWORD` (must match `DB_PASSWORD` in netbox.env) |
+   | `env/redis.env` | `REDIS_PASSWORD` (must match `REDIS_PASSWORD` in netbox.env) |
+   | `env/redis-cache.env` | `REDIS_PASSWORD` (must match `REDIS_CACHE_PASSWORD` in netbox.env) |
+
+   > **Important:** If you deploy this to production, change all default passwords and generate unique keys. The passwords in `env/postgres.env`, `env/redis.env`, and `env/redis-cache.env` must match their corresponding values in `env/netbox.env` or NetBox will fail to connect. The included values are for local development and testing only.
+
+   **Generating a secure key:**
+
+   Use one of the following to generate a cryptographically secure key for `SECRET_KEY`, passwords, or API tokens:
+
+   *Bash / macOS / Linux:*
+   ```bash
+   openssl rand -base64 50
+   ```
+
+   *PowerShell (Windows):*
+   ```powershell
+   -join ((1..50) | ForEach-Object { [char](Get-Random -Minimum 33 -Maximum 127) })
+   ```
+
+   *Python (any OS):*
+   ```python
+   python -c "import secrets; print(secrets.token_urlsafe(50))"
+   ```
+
+3. **Build and start:**
+
+   ```bash
+   docker compose build --no-cache
+   docker compose up -d
+   ```
+
+4. **Create your admin account.** Superuser auto-creation is disabled (`SKIP_SUPERUSER=true`) so that no default admin credentials ship with the repo. Create your own:
+
+   ```bash
+   docker compose exec netbox python /opt/netbox/netbox/manage.py createsuperuser
+   ```
+
+   You will be prompted for a username, email, and password.
+
+5. **Access NetBox** at `http://localhost:8000` and log in with the account you just created.
+
+## File Structure
+
+```
+netbox-docker/
+├── docker-compose.yml        # Container orchestration
+├── docker-compose.override.yml # Build config and port mapping
+├── Dockerfile-Plugins        # Builds NetBox image with plugins pre-installed
+├── plugin_requirements.txt   # Plugin packages and versions
+├── configuration/
+│   ├── configuration.py      # NetBox core configuration
+│   └── plugins.py            # Plugin enablement and settings
+└── env/
+    ├── netbox.env            # NetBox app settings (secret key, DB/Redis passwords, etc.)
+    ├── postgres.env          # PostgreSQL credentials
+    ├── redis.env             # Redis password
+    └── redis-cache.env       # Redis cache password
 ```
 
-The whole application will be available after a few minutes.
-Open the URL `http://0.0.0.0:8000/` in a web-browser.
-You should see the NetBox homepage.
+## Customization
 
-To create the first admin user run this command:
+### Adding a Plugin
 
-```bash
-docker compose exec netbox /opt/netbox/netbox/manage.py createsuperuser
+Three steps: add the package, enable it in the config, and rebuild.
+
+**Step 1 — Add to `plugin_requirements.txt`:**
+
+```
+netbox-my-new-plugin
 ```
 
-If you need to restart Netbox from an empty database often,
-you can also set the `SUPERUSER_*` variables in your `docker-compose.override.yml`.
+**Step 2 — Enable in `configuration/plugins.py`:**
 
-[wiki-getting-started]: https://github.com/netbox-community/netbox-docker/wiki/Getting-Started
+```python
+PLUGINS = [
+    "netbox_secrets",
+    "netbox_floorplan",
+    "netbox_topology_views",
+    "slurpit_netbox",
+    "netbox_documents",
+    "netbox_dhcp",
+    "netbox_my_new_plugin",  # <-- add your new plugin here
+]
 
-## Container Image Tags
-
-New container images are built and published automatically every ~24h.
-
-> We recommend to use either the `vX.Y.Z-a.b.c` tags or the `vX.Y-a.b.c` tags in production!
-
-- `vX.Y.Z-a.b.c`, `vX.Y-a.b.c`:
-  These are release builds containing _NetBox version_ `vX.Y.Z`.
-  They contain the support files of _NetBox Docker version_ `a.b.c`.
-  You must use _NetBox Docker version_ `a.b.c` to guarantee the compatibility.
-  These images are automatically built from [the corresponding releases of NetBox][netbox-releases].
-- `latest-a.b.c`:
-  These are release builds, containing the latest stable version of NetBox.
-  They contain the support files of _NetBox Docker version_ `a.b.c`.
-  You must use _NetBox Docker version_ `a.b.c` to guarantee the compatibility.
-- `snapshot-a.b.c`:
-  These are prerelease builds.
-  They contain the support files of _NetBox Docker version_ `a.b.c`.
-  You must use _NetBox Docker version_ `a.b.c` to guarantee the compatibility.
-  These images are automatically built from the [`main` branch of NetBox][netbox-main].
-
-For each of the above tag, there is an extra tag:
-
-- `vX.Y.Z`, `vX.Y`:
-  This is the same version as `vX.Y.Z-a.b.c` (or `vX.Y-a.b.c`, respectively).
-- `latest`
-  This is the same version as `latest-a.b.c`.
-  It always points to the latest version of _NetBox Docker_.
-- `snapshot`
-  This is the same version as `snapshot-a.b.c`.
-  It always points to the latest version of _NetBox Docker_.
-
-[netbox-releases]: https://github.com/netbox-community/netbox/releases
-[netbox-main]: https://github.com/netbox-community/netbox/tree/main
-
-## Documentation
-
-Please refer [to our wiki on GitHub][netbox-docker-wiki] for further information on how to use the NetBox Docker image properly.
-The wiki covers advanced topics such as using files for secrets, configuring TLS, deployment to Kubernetes, monitoring and configuring LDAP.
-
-Our wiki is a community effort.
-Feel free to correct errors, update outdated information or provide additional guides and insights.
-
-[netbox-docker-wiki]: https://github.com/netbox-community/netbox-docker/wiki/
-
-## Getting Help
-
-Feel free to ask questions in our [GitHub Community][netbox-community]
-or [join our Slack][netbox-docker-slack] and ask [in our channel `#netbox-docker`][netbox-docker-slack-channel],
-which is free to use and where there are almost always people online that can help you.
-
-If you need help with using NetBox or developing for it or against it's API
-you may find [the `#netbox` channel][netbox-slack-channel] on the same Slack instance very helpful.
-
-[netbox-community]: https://github.com/netbox-community/netbox-docker/discussions
-
-## Dependencies
-
-This project relies only on _Docker_ and _docker-compose_ meeting these requirements:
-
-- The _Docker version_ must be at least `20.10.10`.
-- The _containerd version_ must be at least `1.5.6`.
-- The _docker-compose version_ must be at least `1.28.0`.
-
-To check the version installed on your system run `docker --version` and `docker compose version`.
-
-## Updating
-
-Please read [the release notes][releases] carefully when updating to a new image version.
-Note that the version of the NetBox Docker container image must stay in sync with the version of the Git repository.
-
-If you update for the first time, be sure [to follow our _How To Update NetBox Docker_ guide in the wiki][netbox-docker-wiki-updating].
-
-[releases]: https://github.com/netbox-community/netbox-docker/releases
-[netbox-docker-wiki-updating]: https://github.com/netbox-community/netbox-docker/wiki/Updating
-
-## Rebuilding the Image
-
-`./build.sh` can be used to rebuild the container image.
-See `./build.sh --help` for more information or `./build-latest.sh` for an example.
-
-For more details on custom builds [consult our wiki][netbox-docker-wiki-build].
-
-[netbox-docker-wiki-build]: https://github.com/netbox-community/netbox-docker/wiki/Build
-
-## Tests
-
-We have a test script.
-It runs NetBox's own unit tests and ensures that NetBox starts:
-
-```bash
-IMAGE=docker.io/netboxcommunity/netbox:latest ./test.sh
+PLUGINS_CONFIG = {
+    # for some plugins, this part is OPTIONAL
+    # add any plugin-specific settings here
+    "netbox_my_new_plugin": {
+        "some_setting": True,
+    },
+}
 ```
 
-## Support
+**Step 3 — Rebuild and restart:**
 
-This repository is currently maintained by the community.
-The community is expected to help each other.
+```bash
+docker compose build --no-cache
+docker compose up -d
+```
 
-Please consider sponsoring the maintainers of this project.
+> **Note:** The Docker build process handles `pip install` automatically from `plugin_requirements.txt`. You do not need to run pip manually. If you are developing outside of Docker or need to install packages manually inside the container, the individual install commands are:
+>
+> ```bash
+> pip install netbox-secrets
+> pip install netbox-floorplan-plugin
+> pip install netbox-topology-views
+> pip install --no-cache-dir slurpit_netbox
+> pip install netbox-documents
+> pip install netbox-plugin-dhcp
+> ```
+
+### Removing a Plugin
+
+1. Remove the package from `plugin_requirements.txt`
+2. Remove the entry from `PLUGINS` and `PLUGINS_CONFIG` in `configuration/plugins.py`
+3. Rebuild: `docker compose build --no-cache && docker compose up -d`
+
+### Changing the Superuser
+
+**Create a new superuser:**
+
+```bash
+docker compose exec netbox python /opt/netbox/netbox/manage.py createsuperuser
+```
+
+**Change an existing user's password:**
+
+```bash
+docker compose exec netbox python /opt/netbox/netbox/manage.py changepassword yourusername
+```
+
+You can also manage users, passwords, and API tokens through the NetBox web UI under **Admin → Users**.
+
+<!-- **Enable automatic superuser creation on startup** (optional — for personal/dev setups only):
+
+In `env/netbox.env`, change `SKIP_SUPERUSER=true` to `SKIP_SUPERUSER=false` and add:
+
+```
+SUPERUSER_NAME=admin
+SUPERUSER_EMAIL=admin@example.com
+SUPERUSER_PASSWORD=your-secure-password
+SUPERUSER_API_TOKEN=your-api-token
+```
+
+NetBox will create this account automatically on first startup. Do not use this in a public or shared repo with real credentials. -->
+
+## Built With
+
+- [NetBox Community Docker](https://github.com/netbox-community/netbox-docker) v4.6.1
+- Plugins listed above
+
+## Notes
+
+- This setup is based on the [netbox-community/netbox-docker](https://github.com/netbox-community/netbox-docker) project.
+- All plugin static files and database migrations are handled automatically on build and startup.
+- Topology views require devices and cables to be created in NetBox before a map will render.
+- The env files contain default template values. They are safe for local development but should be changed before any production deployment.

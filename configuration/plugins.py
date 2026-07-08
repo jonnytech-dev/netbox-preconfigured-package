@@ -4,7 +4,7 @@
 # To learn how to build images with your required plugins
 # See https://github.com/netbox-community/netbox-docker/wiki/Using-Netbox-Plugins
 
-PLUGINS = ["netbox_topology_views", "netbox_secrets", "netbox_floorplan"]
+PLUGINS = ["netbox_topology_views", "netbox_secrets", "netbox_floorplan", 'slurpit_netbox', 'netbox_documents', "netbox_dhcp",]
 
 PLUGINS_CONFIG = {
     'netbox_secrets': {

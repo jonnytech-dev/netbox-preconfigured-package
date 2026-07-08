@@ -2,3 +2,6 @@ netbox-secrets==3.1.0
 pycryptodome
 netbox-floorplan-plugin==0.9.2
 netbox-topology-views
+slurpit-netbox
+netbox-documents
+netbox-plugin-dhcp
