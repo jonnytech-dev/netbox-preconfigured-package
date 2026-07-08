@@ -23,7 +23,7 @@ A ready-to-go NetBox v4.6.1 Docker setup with plugins pre-installed. Clone it, b
 1. **Clone the repo:**
 
    ```bash
-   git clone https://github.com/YOUR_USERNAME/netbox-docker.git
+   git clone https://github.com/jonnytech-dev/netbox-preconfigured-package.git
    cd netbox-docker
    ```
 
