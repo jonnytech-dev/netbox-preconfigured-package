@@ -1,0 +1,14 @@
+FROM netboxcommunity/netbox:v4.6.1
+
+RUN apt-get update && apt-get install -y git && rm -rf /var/lib/apt/lists/*
+
+COPY ./plugin_requirements.txt /opt/netbox/
+RUN /usr/local/bin/uv pip install --no-cache -r /opt/netbox/plugin_requirements.txt
+
+COPY configuration/plugins.py /etc/netbox/config/plugins.py
+
+RUN DEBUG="true" SECRET_KEY="dummydummydummydummydummydummydummydummydummydummy" \
+    /opt/netbox/venv/bin/python /opt/netbox/netbox/manage.py collectstatic --no-input
+
+# Topology Views Plugin
+RUN mkdir -p /opt/netbox/netbox/static/netbox_topology_views/img
