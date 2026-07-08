@@ -1,4 +1,4 @@
-# netbox-docker
+# netbox-docker (4.6.1 - preconfigured package with installed plugins PnP)
 
 [![GitHub release (latest by date)](https://img.shields.io/github/v/release/netbox-community/netbox-docker)][github-release]
 [![GitHub stars](https://img.shields.io/github/stars/netbox-community/netbox-docker)][github-stargazers]
